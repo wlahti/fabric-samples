@@ -16,7 +16,7 @@ export PATH=${PWD}/../bin:$PATH
 export FABRIC_CFG_PATH=${PWD}/configtx
 export VERBOSE=false
 
-source scriptUtils.sh
+source scripts/utils.sh
 
 # Obtain CONTAINER_IDS and remove them
 # TODO Might want to make this optional - could clear other containers
@@ -289,7 +289,7 @@ function networkUp() {
   fi
 }
 
-## call the script to join create the channel and join the peers of org1 and org2
+## call the script to create the channel and then join the peers of org1 and org2
 function createChannel() {
 
 ## Bring up the network if it is not already up.
@@ -303,11 +303,16 @@ function createChannel() {
   # more to create the channel creation transaction and the anchor peer updates.
   # configtx.yaml is mounted in the cli container, which allows us to use it to
   # create the channel artifacts
- scripts/createChannel.sh $CHANNEL_NAME $CLI_DELAY $MAX_RETRY $VERBOSE
+ OUTPUT="./channel-artifacts/${CHANNEL_NAME}-genesis.block"
+ scripts/createChannel.sh $CHANNEL_NAME $OUTPUT $CLI_DELAY $MAX_RETRY $VERBOSE
   if [ $? -ne 0 ]; then
     fatalln "Create channel failed"
   fi
 
+ scripts/joinChannel.sh $CHANNEL_NAME $OUTPUT $CLI_DELAY $MAX_RETRY $VERBOSE
+  if [ $? -ne 0 ]; then
+    fatalln "Join channel failed"
+  fi
 }
 
 
